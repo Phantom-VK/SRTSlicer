@@ -6,6 +6,9 @@
 A powerful desktop utility that generates **word-level timestamps** from SRT subtitle files. Includes a sleek, customizable Tkinter UI with smart options for input/output, filename handling, and time distribution.
 
 ---
+Download SRT Slicer v1.0.0 : 
+[![Download Installer](https://img.shields.io/badge/Download-Installer-blue)](https://github.com/Phantom-VK/SRTSlicer/releases/tag/v1.0.0)
+
 
 ## 🚀 Features
 
@@ -19,6 +22,7 @@ A powerful desktop utility that generates **word-level timestamps** from SRT sub
 - 🖼️ User-friendly GUI
 
 ---
+
 
 ## 🧩 UI Components
 
