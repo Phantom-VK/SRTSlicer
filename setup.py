@@ -1,6 +1,5 @@
 import sys
 from cx_Freeze import setup, Executable
-import os
 
 # Dependencies that are common across all platforms
 base_packages = [
@@ -14,7 +13,7 @@ base_packages = [
 if sys.platform == "win32":
     base = "Win32GUI"  # For Windows GUI apps
     include_files = [
-        ("app_icon.ico", "app_icon.ico"),
+        ("app_icon1.ico", "app_icon1.ico"),
     ]
     # Windows-specific dependencies
     packages = base_packages + []
@@ -50,10 +49,10 @@ build_exe_options = {
 # Executable configuration
 executables = [
     Executable(
-        "srt_slicer.py",
+        "main.py",
         base=base,
         target_name="srt_slicer" + (".exe" if sys.platform == "win32" else ""),
-        icon="app_icon.ico" if sys.platform == "win32" else None,  # Linux doesn't use .ico
+        icon="app_icon1.ico" if sys.platform == "win32" else None,  # Linux doesn't use .ico
         copyright="Your Copyright Here",
         trademarks="Your Trademarks Here"
     )

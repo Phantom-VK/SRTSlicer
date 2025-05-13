@@ -1,36 +1,20 @@
-import sys
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import ttk
 import os
-import re
-from datetime import datetime, timedelta
+import sys
+from srt_slicer_logic import SRTSlicerLogic
 
 
-class SRTSlicerApp:
+class SRTSlicerUI:
     def __init__(self, master):
         self.master = master
+        self.logic = SRTSlicerLogic()
         master.title("SRT Word-Level Timestamp Slicer")
-        master.geometry("700x600")
+        master.geometry("1280x720")
         master.configure(bg='#f0f0f0')
 
         # Set application icon
-        try:
-            # Try to load icon from multiple possible locations
-            icon_paths = [
-                'app_icon.ico',  # Current directory
-                os.path.join(os.path.dirname(__file__), 'app_icon.ico'),  # Script directory
-                os.path.join(sys.path[0], 'app_icon.ico')  # Executable directory
-            ]
-
-            # Find the first existing icon
-            icon_path = next((path for path in icon_paths if os.path.exists(path)), None)
-
-            if icon_path:
-                master.iconbitmap(icon_path)
-            else:
-                print("Icon file not found. Using default icon.")
-        except Exception as e:
-            print(f"Error loading icon: {e}")
+        self.set_app_icon()
 
         # Style
         self.style = ttk.Style()
@@ -41,22 +25,12 @@ class SRTSlicerApp:
         self.main_container = ttk.Frame(master, padding="10")
         self.main_container.pack(fill='both', expand=True, padx=10, pady=10)
 
-        # Input File Frame
+        # Create all UI sections
         self.create_input_file_section()
-
-        # Output File Frame
         self.create_output_file_section()
-
-        # Custom Filename Frame
         self.create_filename_section()
-
-        # Distribution Method Frame
         self.create_distribution_section()
-
-        # Processing Options Frame
         self.create_processing_options()
-
-        # Process Button
         self.create_process_button()
 
         # Progress Bar
@@ -66,6 +40,20 @@ class SRTSlicerApp:
         # Status Label
         self.status_label = ttk.Label(master, text="Ready to process", font=('Arial', 10, 'italic'))
         self.status_label.pack(pady=10)
+
+    def set_app_icon(self):
+        """Try to set the application icon from various possible locations"""
+        try:
+            icon_paths = [
+                'app_icon1.ico',
+                os.path.join(os.path.dirname(__file__), 'app_icon1.ico'),
+                os.path.join(sys.path[0], 'app_icon1.ico')
+            ]
+            icon_path = next((path for path in icon_paths if os.path.exists(path)), None)
+            if icon_path:
+                self.master.iconbitmap(icon_path)
+        except Exception as e:
+            print(f"Error loading icon: {e}")
 
     def create_input_file_section(self):
         """Create input file selection section."""
@@ -190,22 +178,17 @@ class SRTSlicerApp:
 
     def toggle_filename_fields(self):
         """Toggle filename fields based on auto-generate checkbox."""
-        state = 'disabled' if self.auto_generate_var.get() else 'normal'
-        # You might want to add more fields to disable/enable here
-        # For now, just as an example:
-        # self.prefix_entry.configure(state=state)
-        # self.suffix_entry.configure(state=state)
         pass
 
     def browse_input_file(self):
         """Open file dialog to select input SRT file."""
+        from tkinter import filedialog
         filename = filedialog.askopenfilename(
             title="Select SRT File",
             filetypes=[("SRT Files", "*.srt"), ("Text Files", "*.txt"), ("All Files", "*.*")]
         )
         if filename:
             self.input_path.set(filename)
-            # Auto-generate output path if needed
             self.auto_generate_output_path(filename)
 
     def auto_generate_output_path(self, input_path):
@@ -213,21 +196,19 @@ class SRTSlicerApp:
         if not self.auto_generate_var.get():
             return
 
-        # Get directory and filename
         dir_path = os.path.dirname(input_path)
         base_name = os.path.splitext(os.path.basename(input_path))[0]
 
-        # Generate output filename
         prefix = self.prefix_var.get()
         suffix = self.suffix_var.get()
         output_filename = f"{prefix}{base_name}{suffix}{self.output_type_var.get()}"
 
-        # Set full output path
         output_path = os.path.join(dir_path, output_filename)
         self.output_path.set(output_path)
 
     def browse_output_file(self):
         """Open file dialog to select output SRT file."""
+        from tkinter import filedialog
         filename = filedialog.asksaveasfilename(
             title="Save Word-Level SRT File",
             defaultextension=self.output_type_var.get(),
@@ -240,56 +221,10 @@ class SRTSlicerApp:
         if filename:
             self.output_path.set(filename)
 
-    def parse_timestamp(self, timestamp_str):
-        """Convert timestamp string to datetime object."""
-        return datetime.strptime(timestamp_str, '%H:%M:%S,%f')
-
-    def generate_word_timestamps(self, start_time, end_time, words):
-        """Generate individual timestamps for each word based on selected distribution method."""
-        total_duration = (self.parse_timestamp(end_time) - self.parse_timestamp(start_time)).total_seconds()
-
-        # If only one word, return entire timestamp for that word
-        if len(words) == 1:
-            return [(start_time, end_time, words[0])]
-
-        # Distribution method selection
-        if self.distribution_var.get() == "equal":
-            # Equal time distribution
-            time_per_word = total_duration / len(words)
-
-            word_timestamps = []
-            for i, word in enumerate(words):
-                word_start_time = (self.parse_timestamp(start_time) + timedelta(seconds=i * time_per_word)).strftime(
-                    '%H:%M:%S,%f')[:-3]
-                word_end_time = (self.parse_timestamp(start_time) + timedelta(
-                    seconds=(i + 1) * time_per_word)).strftime('%H:%M:%S,%f')[:-3]
-                word_timestamps.append((word_start_time, word_end_time, word))
-
-            return word_timestamps
-
-        else:
-            # Word length-based distribution
-            total_chars = sum(len(word) for word in words)
-
-            word_timestamps = []
-            current_start = self.parse_timestamp(start_time)
-
-            for word in words:
-                # Proportional time based on word length
-                word_proportion = len(word) / total_chars
-                word_duration = total_duration * word_proportion
-
-                word_start_time = current_start.strftime('%H:%M:%S,%f')[:-3]
-                current_start += timedelta(seconds=word_duration)
-                word_end_time = current_start.strftime('%H:%M:%S,%f')[:-3]
-
-                word_timestamps.append((word_start_time, word_end_time, word))
-
-            return word_timestamps
-
     def process_srt(self):
-        """Main SRT processing method."""
-        # Validate input
+        """Handle the SRT processing by delegating to the logic class."""
+        from tkinter import messagebox
+
         input_file = self.input_path.get()
         output_file = self.output_path.get()
 
@@ -298,70 +233,35 @@ class SRTSlicerApp:
             return
 
         try:
-            # Read input file
-            with open(input_file, 'r', encoding='utf-8') as f:
-                content = f.read()
+            # Configure logic with current settings
+            self.logic.configure(
+                input_file=input_file,
+                output_file=output_file,
+                distribution_method=self.distribution_var.get(),
+                preserve_structure=self.preserve_var.get(),
+                progress_callback=self.update_progress,
+                status_callback=self.update_status
+            )
 
-            # Reset progress
-            self.progress['value'] = 0
-            self.status_label.config(text="Processing...")
-            self.master.update_idletasks()
+            # Start processing
+            self.logic.process()
 
-            # Subtitle block extraction regex
-            subtitle_pattern = re.compile(
-                r'(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n(.+?)(?=\n\n|\Z)', re.DOTALL)
-
-            word_level_srt = []
-            global_counter = 1
-
-            # Find all subtitle blocks
-            matches = list(subtitle_pattern.finditer(content))
-
-            for i, match in enumerate(matches):
-                # Update progress
-                self.progress['value'] = (i / len(matches)) * 100
-                self.master.update_idletasks()
-
-                start_time = match.group(2)
-                end_time = match.group(3)
-                dialog = match.group(4).strip()
-
-                # Split dialog into words
-                words = dialog.split()
-
-                # Generate word-level timestamps
-                word_timestamps = self.generate_word_timestamps(start_time, end_time, words)
-
-                # Preserve original subtitle structure or not
-                if self.preserve_var.get():
-                    # Maintain original subtitle context
-                    subtitle_entry = f"Original Subtitle: {dialog}\n\n"
-                    word_level_srt.append(subtitle_entry)
-
-                # Prepare word-level SRT content
-                for word_start, word_end, word in word_timestamps:
-                    word_level_srt.append(f"{global_counter}\n{word_start} --> {word_end}\n{word}\n\n")
-                    global_counter += 1
-
-            # Write to output file
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.writelines(word_level_srt)
-
-            # Final update
-            self.progress['value'] = 100
-            self.status_label.config(text="Processing Complete!")
+            # Show success message
             messagebox.showinfo("Success", f"Word-level SRT created at:\n{output_file}")
+            self.status_label.config(text="Processing Complete!")
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
             self.status_label.config(text="Processing Failed")
 
+    def update_progress(self, value):
+        """Update the progress bar."""
+        self.progress['value'] = value
+        self.master.update_idletasks()
 
-def main():
-    root = tk.Tk()
-    app = SRTSlicerApp(root)
-    root.mainloop()
+    def update_status(self, text):
+        """Update the status label."""
+        self.status_label.config(text=text)
+        self.master.update_idletasks()
 
 
-if __name__ == "__main__":
-    main()
