@@ -9,7 +9,7 @@ A powerful desktop utility that generates **word-level timestamps** from SRT sub
 Download SRT Slicer v1.0.0 : 
 [![Download Here](https://img.shields.io/badge/Download-Installer-blue)](https://github.com/Phantom-VK/SRTSlicer/releases/tag/v1.0.0)
 
-Linux / MAC: srt_slicer 
+Linux / MAC: srt_slicer || 
 Windows: SRT_Slicer_Installer.exe
 
 ## 🚀 Features
